@@ -1,8 +1,9 @@
 import { render, screen } from '@testing-library/react';
 import App from './App';
 
-test('renders learn react link', () => {
+test('renders diploma-style management platform home', () => {
   render(<App />);
-  const linkElement = screen.getByText(/learn react/i);
-  expect(linkElement).toBeInTheDocument();
+  expect(screen.getByText(/Demand & Price Management System/i)).toBeInTheDocument();
+  expect(screen.getByRole('link', { name: /Open pricing center/i })).toBeInTheDocument();
+  expect(screen.getByText(/Intelligent demand and price management workspace/i)).toBeInTheDocument();
 });
