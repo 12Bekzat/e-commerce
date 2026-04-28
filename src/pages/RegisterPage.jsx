@@ -13,16 +13,19 @@ export default function RegisterPage() {
   const navigate = useNavigate();
   const [form, setForm] = useState({ name: '', email: '', password: '', confirmPassword: '' });
   const [error, setError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
+    setError('');
 
     if (form.password !== form.confirmPassword) {
       setError('Passwords do not match.');
       return;
     }
 
-    const result = register({
+    setIsSubmitting(true);
+    const result = await register({
       name: form.name,
       email: form.email,
       password: form.password,
@@ -30,6 +33,7 @@ export default function RegisterPage() {
 
     if (!result.ok) {
       setError(result.message);
+      setIsSubmitting(false);
       return;
     }
 
@@ -105,8 +109,8 @@ export default function RegisterPage() {
 
           {error ? <p className="error-text">{error}</p> : null}
 
-          <button type="submit" className="button">
-            Create account
+          <button type="submit" className="button" disabled={isSubmitting}>
+            {isSubmitting ? 'Creating...' : 'Create account'}
           </button>
         </form>
 

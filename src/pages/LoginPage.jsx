@@ -14,16 +14,20 @@ export default function LoginPage() {
   const location = useLocation();
   const [form, setForm] = useState({ email: '', password: '' });
   const [error, setError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const redirectTo = location.state?.from?.pathname || '/';
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
+    setIsSubmitting(true);
+    setError('');
 
-    const result = login(form);
+    const result = await login(form);
 
     if (!result.ok) {
       setError(result.message);
+      setIsSubmitting(false);
       return;
     }
 
@@ -51,7 +55,8 @@ export default function LoginPage() {
       <article className="card auth-card">
         <p className="eyebrow">Welcome back</p>
         <h2>Login</h2>
-        <p className="muted">Demo user: demo@dpmem.com / demo123</p>
+        <p className="muted">Demo: demo@dpmem.com / demo123</p>
+        <p className="muted">Admin: admin@dpmem.com / admin123</p>
 
         <form className="form-stack" onSubmit={handleSubmit}>
           <label>
@@ -76,8 +81,8 @@ export default function LoginPage() {
 
           {error ? <p className="error-text">{error}</p> : null}
 
-          <button type="submit" className="button">
-            Sign in
+          <button type="submit" className="button" disabled={isSubmitting}>
+            {isSubmitting ? 'Signing in...' : 'Sign in'}
           </button>
         </form>
 

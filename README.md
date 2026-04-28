@@ -1,70 +1,212 @@
-# Getting Started with Create React App
+# DPMEM E-Commerce Demand and Pricing Platform
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+Full-stack site for the diploma project about demand and price management in e-commerce. The system shows how a business user can analyze products, monitor demand, manage pricing recommendations, keep decision history, and control catalog data through an admin workspace.
 
-## Available Scripts
+## Main Sections
 
-In the project directory, you can run:
+- `Overview` - main page with a short explanation of the system.
+- `Product Intelligence` - product catalog, filters, comparison, and local pricing queue.
+- `Pricing Center` - pricing recommendation approval workflow.
+- `Analytics` - demand, regional performance, and model monitoring.
+- `Profile` - user workspace and pricing decision history.
+- `Admin` - admin panel for users, roles, product editing, and product creation.
 
-### `npm start`
+## Product Intelligence
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+The catalog is used to inspect product signals before a product goes into a pricing workflow.
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+Controls:
 
-### `npm test`
+- `Search` searches by product name and description.
+- `Category` filters products by category.
+- `Sort by` changes product order.
+- `Min price` and `Max price` limit the price range.
+- `Min rating` filters by rating.
+- `Demand floor` filters by minimum demand index.
+- `Active signal only` keeps products with active stock signal.
+- `Top demand`, `Budget range`, `Premium`, `In stock` are quick presets.
+- `Reset all` clears filters.
+- `Grid` and `List` switch catalog layout.
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+Product card actions:
 
-### `npm run build`
+- `+` / `*` adds or removes a product from watchlist.
+- `Queue for pricing` adds a product to local pricing queue.
+- `Compare` adds a product to comparison.
+- `Clear comparison` clears selected comparison products.
+- `Prev`, `Next`, and page numbers control pagination.
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+## Pricing Center
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+Pricing Center is the decision workflow for model-generated pricing recommendations.
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+Main actions:
 
-### `npm run eject`
+- `Approve` approves one recommendation.
+- `Approve all` approves all recommendations.
+- `Recalculate` recalculates recommendation prices and confidence.
+- `Apply override` saves a manually entered price from `Override price`.
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+Displayed fields:
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+- `Current` - current product price.
+- `Recommended` - model recommended price.
+- `Elasticity` - demand elasticity estimate.
+- `Status` - recommendation state: pending, approved, overridden, or recalculated.
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+## Analytics
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+Analytics shows demand and model signals.
 
-## Learn More
+Controls and blocks:
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+- `Timeframe` switches period: `24h`, `7d`, `30d`.
+- `Region` filters regional performance.
+- `Volatility guard` sets a price volatility limit.
+- `Peak Demand by Hour` shows hourly demand.
+- `Regional Performance` shows regional demand and uplift.
+- `Model diagnostics` shows MAPE, data freshness, and RL reward stability.
+- `Scenario simulation` shows pricing scenario cards.
+- `Model activity feed` shows recent model events.
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+## Profile
 
-### Code Splitting
+Profile stores user workspace information.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+Features:
 
-### Analyzing the Bundle Size
+- `Name` changes user name.
+- `Email` is read-only.
+- `Save changes` saves profile changes.
+- `Recent decision history` shows approved and overridden pricing decisions.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+## Admin Panel
 
-### Making a Progressive Web App
+Admin panel is available only for users with `ROLE_ADMIN`. The `Admin` navigation item appears only for admins.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+Admin account:
 
-### Advanced Configuration
+```text
+admin@dpmem.com / admin123
+```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+Top area:
 
-### Deployment
+- `Refresh data` reloads admin data from backend.
+- KPI cards show users, products, recommendations, and catalog value.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+### Overview Tab
 
-### `npm run build` fails to minify
+- `Pending` shows pending pricing recommendations.
+- `Approved` shows approved recommendations.
+- `Overridden` shows manually changed recommendations.
+- `Average demand` shows average catalog demand index.
+- `Admin notes` explains what admin controls.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+### Users Tab
+
+- User table shows name, email, role, and creation date.
+- `Change role` changes user role.
+- `Analyst` gives normal workspace access.
+- `Admin` gives access to admin panel.
+
+### Catalog Control Tab
+
+This tab has two product management flows.
+
+Product signal editor:
+
+- `Product` selects an existing product by SKU.
+- `Price` updates current product price.
+- `Stock` updates product stock.
+- `Demand index` updates demand index from 0 to 100.
+- `Save product signal` saves changes to backend.
+- `Selected product` previews the chosen product.
+
+Add product:
+
+- `SKU` is the unique product identifier.
+- `Name` is the product name shown in the catalog.
+- `Category` is used by catalog filtering.
+- `Price` is the current product price.
+- `Stock` is the available quantity.
+- `Rating` is the displayed product rating.
+- `Reviews` is the number of product reviews.
+- `Demand index` is the demand score from 0 to 100.
+- `Image URL` is the product image shown in the catalog.
+- `Description` is the short product description.
+- `Add product` creates the product in PostgreSQL and immediately adds it to the catalog.
+
+## Backend
+
+Backend is responsible for persistence, business logic, security, and REST API.
+
+PostgreSQL stores:
+
+- users;
+- products;
+- pricing recommendations;
+- pricing decision history.
+
+Backend features:
+
+- product list loading;
+- pricing recommendation workflow;
+- manual price override;
+- recommendation recalculation;
+- analytics summary;
+- decision history;
+- admin summary;
+- user role management;
+- product signal editing;
+- product creation.
+
+## Tech Stack
+
+- Frontend: React, React Router
+- Backend: Spring Boot, Spring Security, Spring Data JPA
+- Database: PostgreSQL `localhost:5432`, user `postgres`, password `root`
+- API format: REST JSON
+
+## Run
+
+Backend:
+
+```powershell
+cd ..\ecommerce
+.\mvnw.cmd spring-boot:run
+```
+
+Frontend:
+
+```powershell
+cd ..\e-commerce
+npm start
+```
+
+Open site: `http://localhost:3000`.
+
+Demo accounts:
+
+```text
+demo@dpmem.com / demo123
+admin@dpmem.com / admin123
+```
+
+Backend uses PostgreSQL and creates/updates tables through Hibernate.
+
+## API
+
+- `GET /api/products` - product list.
+- `GET /api/pricing/recommendations` - pricing recommendations.
+- `POST /api/pricing/approve-all` - approve all recommendations.
+- `POST /api/pricing/{sku}/approve` - approve one recommendation.
+- `PATCH /api/pricing/{sku}/override` - manually override recommended price.
+- `POST /api/pricing/recalculate` - recalculate recommendations.
+- `GET /api/analytics/summary` - analytics summary.
+- `GET /api/profile/decisions` - user pricing decision history.
+- `GET /api/admin/summary` - admin panel summary.
+- `GET /api/admin/users` - users list.
+- `PATCH /api/admin/users/{userId}/role` - update user role.
+- `POST /api/admin/products` - create product.
+- `PATCH /api/admin/products/{sku}` - update product price, stock, or demand index.

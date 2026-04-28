@@ -1,11 +1,11 @@
 import {
-  activityFeed,
   demandByHour,
   marketSignals,
   regionalPerformance,
   scenarioCards,
 } from '../data/mockData';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { apiRequest } from '../api/client';
 
 const baseDiagnostics = [
   { label: 'MAPE', value: 92 },
@@ -25,6 +25,32 @@ export default function AnalyticsPage() {
   const [timeframe, setTimeframe] = useState('7d');
   const [region, setRegion] = useState('All');
   const [volatilityGuard, setVolatilityGuard] = useState(22);
+  const [analytics, setAnalytics] = useState(null);
+
+  useEffect(() => {
+    let active = true;
+
+    const loadAnalytics = async () => {
+      try {
+        const data = await apiRequest('/analytics/summary');
+        if (active) setAnalytics(data);
+      } catch (error) {
+        if (active) setAnalytics(null);
+      }
+    };
+
+    loadAnalytics();
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const liveMarketSignals = analytics?.marketSignals || marketSignals;
+  const liveDemandByHour = analytics?.demandByHour || demandByHour;
+  const liveRegionalPerformance = analytics?.regionalPerformance || regionalPerformance;
+  const liveActivityFeed = analytics?.activityFeed || [
+    'Connect backend to load live model activity feed.',
+  ];
 
   const diagnostics = useMemo(
     () =>
@@ -36,9 +62,9 @@ export default function AnalyticsPage() {
   );
 
   const filteredRegions = useMemo(() => {
-    if (region === 'All') return regionalPerformance;
-    return regionalPerformance.filter((item) => item.name === region);
-  }, [region]);
+    if (region === 'All') return liveRegionalPerformance;
+    return liveRegionalPerformance.filter((item) => item.name === region);
+  }, [liveRegionalPerformance, region]);
 
   return (
     <section className="page-stack">
@@ -68,7 +94,7 @@ export default function AnalyticsPage() {
               Region
               <select value={region} onChange={(event) => setRegion(event.target.value)}>
                 <option value="All">All</option>
-                {regionalPerformance.map((item) => (
+            {liveRegionalPerformance.map((item) => (
                   <option key={item.name} value={item.name}>
                     {item.name}
                   </option>
@@ -87,7 +113,7 @@ export default function AnalyticsPage() {
             </label>
           </div>
           <div className="signal-grid">
-            {marketSignals.map((signal) => (
+            {liveMarketSignals.map((signal) => (
               <div key={signal.label} className="signal-card">
                 <small>{signal.label}</small>
                 <strong>{signal.value}</strong>
@@ -101,7 +127,7 @@ export default function AnalyticsPage() {
         <article className="card span-6">
           <h3>Peak Demand by Hour</h3>
           <div className="vertical-chart">
-            {demandByHour.map((point) => (
+            {liveDemandByHour.map((point) => (
               <div key={point.label} className="chart-col">
                 <div className="bar-track">
                   <span style={{ height: `${point.value}%` }} />
@@ -200,7 +226,7 @@ export default function AnalyticsPage() {
       <article className="card activity-feed">
         <h3>Model activity feed</h3>
         <ul>
-          {activityFeed.map((item) => (
+          {liveActivityFeed.map((item) => (
             <li key={item}>{item}</li>
           ))}
         </ul>

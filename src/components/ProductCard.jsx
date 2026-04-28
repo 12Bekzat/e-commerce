@@ -35,7 +35,7 @@ export default function ProductCard({
           onClick={() => onToggleWatchlist?.(product.id)}
           aria-label={isWatchlisted ? 'Remove from watchlist' : 'Add to watchlist'}
         >
-          {isWatchlisted ? '★' : '☆'}
+          {isWatchlisted ? '*' : '+'}
         </button>
 
         <div className="image-badges">

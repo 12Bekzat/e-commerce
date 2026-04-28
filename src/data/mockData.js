@@ -288,7 +288,7 @@ export const queueStatuses = [
   },
   {
     title: 'Price delta cap',
-    value: '±12%',
+    value: '+/-12%',
     description: 'Limits single-step volatility to maintain stable customer perception.',
   },
   {

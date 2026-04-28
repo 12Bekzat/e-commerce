@@ -1,7 +1,9 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
+import AdminRoute from './components/AdminRoute';
 import Layout from './components/Layout';
 import ProtectedRoute from './components/ProtectedRoute';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import AdminPage from './pages/AdminPage';
 import AnalyticsPage from './pages/AnalyticsPage';
 import CatalogPage from './pages/CatalogPage';
 import HomePage from './pages/HomePage';
@@ -13,7 +15,11 @@ import RegisterPage from './pages/RegisterPage';
 import './App.css';
 
 function PublicOnlyRoute({ children }) {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isLoading } = useAuth();
+
+  if (isLoading) {
+    return <article className="card empty-state">Loading session...</article>;
+  }
 
   if (isAuthenticated) {
     return <Navigate to="/profile" replace />;
@@ -50,6 +56,14 @@ function AppRoutes() {
             <ProtectedRoute>
               <ProfilePage />
             </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin"
+          element={
+            <AdminRoute>
+              <AdminPage />
+            </AdminRoute>
           }
         />
       </Route>

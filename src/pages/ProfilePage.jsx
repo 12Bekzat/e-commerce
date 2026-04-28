@@ -1,5 +1,6 @@
-import { useState } from 'react';
-import { products, recentDecisions } from '../data/mockData';
+import { useEffect, useState } from 'react';
+import { products } from '../data/mockData';
+import { apiRequest } from '../api/client';
 import { useAuth } from '../context/AuthContext';
 
 const accountStats = [
@@ -12,12 +13,35 @@ export default function ProfilePage() {
   const { currentUser, updateProfile } = useAuth();
   const [name, setName] = useState(currentUser?.name || '');
   const [saved, setSaved] = useState(false);
+  const [recentDecisions, setRecentDecisions] = useState([]);
 
-  const handleSubmit = (event) => {
+  useEffect(() => {
+    setName(currentUser?.name || '');
+  }, [currentUser]);
+
+  useEffect(() => {
+    let active = true;
+
+    const loadDecisions = async () => {
+      try {
+        const data = await apiRequest('/profile/decisions');
+        if (active) setRecentDecisions(data);
+      } catch (error) {
+        if (active) setRecentDecisions([]);
+      }
+    };
+
+    loadDecisions();
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const handleSubmit = async (event) => {
     event.preventDefault();
     if (!name.trim()) return;
 
-    updateProfile({ name });
+    await updateProfile({ name });
     setSaved(true);
     setTimeout(() => setSaved(false), 1200);
   };
@@ -68,11 +92,14 @@ export default function ProfilePage() {
         <article className="card">
           <h3>Recent decision history</h3>
           <div className="order-list">
+            {recentDecisions.length === 0 ? (
+              <p className="muted">No pricing decisions yet. Approve or override prices to build history.</p>
+            ) : null}
             {recentDecisions.map((decision) => (
               <div key={decision.id} className="order-row">
                 <div>
                   <strong>{decision.id}</strong>
-                  <p className="muted">{decision.createdAt}</p>
+                  <p className="muted">{new Date(decision.createdAt).toLocaleDateString()}</p>
                 </div>
                 <span className="tag">{decision.status}</span>
                 <strong>{decision.impact}</strong>

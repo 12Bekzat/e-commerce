@@ -1,22 +1,18 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import ProductCard from '../components/ProductCard';
-import { editorialCollections, heroGallery, products } from '../data/mockData';
+import { apiRequest } from '../api/client';
+import { editorialCollections, heroGallery } from '../data/mockData';
 
-const categories = ['All', ...new Set(products.map((product) => product.category))];
-const priceValues = products.map((product) => product.price);
-const globalMinPrice = Math.min(...priceValues);
-const globalMaxPrice = Math.max(...priceValues);
-
-const defaultFilters = {
+const makeDefaultFilters = (minPrice = 0, maxPrice = 1000) => ({
   query: '',
   category: 'All',
-  minPrice: globalMinPrice,
-  maxPrice: globalMaxPrice,
+  minPrice,
+  maxPrice,
   minRating: 0,
   minDemand: 0,
   inStockOnly: false,
   sortBy: 'relevance',
-};
+});
 
 const presetFilters = [
   { id: 'top-demand', label: 'Top demand', patch: { minDemand: 80, sortBy: 'demand-desc' } },
@@ -32,8 +28,8 @@ const presetFilters = [
 const sortProducts = (items, sortBy, watchlist) => {
   const sorted = [...items];
 
-  if (sortBy === 'price-asc') sorted.sort((a, b) => a.price - b.price);
-  if (sortBy === 'price-desc') sorted.sort((a, b) => b.price - a.price);
+  if (sortBy === 'price-asc') sorted.sort((a, b) => Number(a.price) - Number(b.price));
+  if (sortBy === 'price-desc') sorted.sort((a, b) => Number(b.price) - Number(a.price));
   if (sortBy === 'rating-desc') sorted.sort((a, b) => b.rating - a.rating);
   if (sortBy === 'demand-desc') sorted.sort((a, b) => b.demandIndex - a.demandIndex);
   if (sortBy === 'stock-desc') sorted.sort((a, b) => b.stock - a.stock);
@@ -49,12 +45,49 @@ const sortProducts = (items, sortBy, watchlist) => {
 };
 
 export default function CatalogPage() {
-  const [filters, setFilters] = useState(defaultFilters);
+  const [products, setProducts] = useState([]);
+  const [filters, setFilters] = useState(makeDefaultFilters());
   const [viewMode, setViewMode] = useState('grid');
   const [currentPage, setCurrentPage] = useState(1);
   const [watchlistIds, setWatchlistIds] = useState(() => new Set());
   const [compareIds, setCompareIds] = useState([]);
   const [queuedIds, setQueuedIds] = useState(() => new Set());
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    let active = true;
+
+    const loadProducts = async () => {
+      try {
+        const data = await apiRequest('/products');
+        if (!active) return;
+        setProducts(data);
+        const prices = data.map((product) => Number(product.price));
+        const minPrice = Math.min(...prices);
+        const maxPrice = Math.max(...prices);
+        setFilters(makeDefaultFilters(minPrice, maxPrice));
+      } catch (loadError) {
+        if (active) setError(loadError.message);
+      } finally {
+        if (active) setIsLoading(false);
+      }
+    };
+
+    loadProducts();
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const categories = useMemo(
+    () => ['All', ...new Set(products.map((product) => product.category))],
+    [products]
+  );
+
+  const priceValues = useMemo(() => products.map((product) => Number(product.price)), [products]);
+  const globalMinPrice = priceValues.length ? Math.min(...priceValues) : 0;
+  const globalMaxPrice = priceValues.length ? Math.max(...priceValues) : 1000;
 
   const filteredProducts = useMemo(() => {
     const normalized = filters.query.toLowerCase().trim();
@@ -66,7 +99,7 @@ export default function CatalogPage() {
         product.name.toLowerCase().includes(normalized) ||
         product.description.toLowerCase().includes(normalized);
       const matchesPrice =
-        product.price >= filters.minPrice && product.price <= filters.maxPrice;
+        Number(product.price) >= filters.minPrice && Number(product.price) <= filters.maxPrice;
       const matchesRating = product.rating >= filters.minRating;
       const matchesDemand = product.demandIndex >= filters.minDemand;
       const matchesStock = !filters.inStockOnly || product.stock > 0;
@@ -82,7 +115,7 @@ export default function CatalogPage() {
     });
 
     return sortProducts(filtered, filters.sortBy, watchlistIds);
-  }, [filters, watchlistIds]);
+  }, [filters, products, watchlistIds]);
 
   const topDemandProducts = useMemo(
     () => [...filteredProducts].sort((a, b) => b.demandIndex - a.demandIndex).slice(0, 3),
@@ -99,14 +132,14 @@ export default function CatalogPage() {
 
   const comparedProducts = useMemo(
     () => products.filter((product) => compareIds.includes(product.id)),
-    [compareIds]
+    [compareIds, products]
   );
 
   const compareSummary = useMemo(() => {
     if (comparedProducts.length === 0) return null;
 
     const avgPrice = Math.round(
-      comparedProducts.reduce((sum, item) => sum + item.price, 0) / comparedProducts.length
+      comparedProducts.reduce((sum, item) => sum + Number(item.price), 0) / comparedProducts.length
     );
     const avgRating = (
       comparedProducts.reduce((sum, item) => sum + item.rating, 0) / comparedProducts.length
@@ -161,7 +194,7 @@ export default function CatalogPage() {
   };
 
   const resetFilters = () => {
-    setFilters(defaultFilters);
+    setFilters(makeDefaultFilters(globalMinPrice, globalMaxPrice));
     setCurrentPage(1);
   };
 
@@ -203,6 +236,19 @@ export default function CatalogPage() {
     () => Array.from({ length: totalPages }, (_, index) => index + 1),
     [totalPages]
   );
+
+  if (isLoading) {
+    return <article className="card empty-state">Loading products...</article>;
+  }
+
+  if (error) {
+    return (
+      <article className="card empty-state">
+        <h3>Backend is unavailable</h3>
+        <p className="muted">{error}</p>
+      </article>
+    );
+  }
 
   return (
     <section className="page-stack">
@@ -368,7 +414,7 @@ export default function CatalogPage() {
                 className="active-filter-chip"
                 onClick={() => clearFilterChip(item.key)}
               >
-                {item.label} ×
+                {item.label} x
               </button>
             ))}
           </div>
@@ -410,7 +456,7 @@ export default function CatalogPage() {
             <div className="compare-chip-row">
               {comparedProducts.map((item) => (
                 <button key={item.id} type="button" onClick={() => toggleCompare(item.id)}>
-                  {item.name} ×
+                  {item.name} x
                 </button>
               ))}
             </div>

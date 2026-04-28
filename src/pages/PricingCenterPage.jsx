@@ -1,10 +1,10 @@
 import {
   activityFeed,
-  pricingRecommendations,
   queueStatuses,
   scenarioCards,
 } from '../data/mockData';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { apiRequest } from '../api/client';
 
 const formatCurrency = (value) =>
   new Intl.NumberFormat('en-US', {
@@ -14,9 +14,33 @@ const formatCurrency = (value) =>
   }).format(value);
 
 export default function PricingCenterPage() {
-  const [rows, setRows] = useState(pricingRecommendations);
-  const [selectedSku, setSelectedSku] = useState(pricingRecommendations[0]?.sku || '');
+  const [rows, setRows] = useState([]);
+  const [selectedSku, setSelectedSku] = useState('');
   const [overrideValue, setOverrideValue] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    let active = true;
+
+    const loadRecommendations = async () => {
+      try {
+        const data = await apiRequest('/pricing/recommendations');
+        if (!active) return;
+        setRows(data);
+        setSelectedSku(data[0]?.sku || '');
+      } catch (loadError) {
+        if (active) setError(loadError.message);
+      } finally {
+        if (active) setIsLoading(false);
+      }
+    };
+
+    loadRecommendations();
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const selected = useMemo(() => rows.find((row) => row.sku === selectedSku), [rows, selectedSku]);
 
@@ -27,52 +51,46 @@ export default function PricingCenterPage() {
     return { pending, approved, overridden };
   }, [rows]);
 
-  const handleApproveAll = () => {
-    setRows((prev) => prev.map((item) => ({ ...item, status: 'Approved' })));
+  const handleApproveAll = async () => {
+    const data = await apiRequest('/pricing/approve-all', { method: 'POST' });
+    setRows(data);
   };
 
-  const handleApproveOne = (sku) => {
-    setRows((prev) =>
-      prev.map((item) =>
-        item.sku === sku
-          ? {
-              ...item,
-              status: 'Approved',
-            }
-          : item
-      )
-    );
+  const handleApproveOne = async (sku) => {
+    const updated = await apiRequest(`/pricing/${sku}/approve`, { method: 'POST' });
+    setRows((prev) => prev.map((item) => (item.sku === sku ? updated : item)));
   };
 
-  const handleOverride = () => {
+  const handleOverride = async () => {
     const numeric = Number(overrideValue);
     if (!selected || Number.isNaN(numeric) || numeric <= 0) return;
 
-    setRows((prev) =>
-      prev.map((item) =>
-        item.sku === selectedSku
-          ? {
-              ...item,
-              recommendedPrice: numeric,
-              status: 'Overridden',
-            }
-          : item
-      )
-    );
+    const updated = await apiRequest(`/pricing/${selectedSku}/override`, {
+      method: 'PATCH',
+      body: JSON.stringify({ price: numeric }),
+    });
+    setRows((prev) => prev.map((item) => (item.sku === selectedSku ? updated : item)));
 
     setOverrideValue('');
   };
 
-  const handleRecalculate = () => {
-    setRows((prev) =>
-      prev.map((item) => ({
-        ...item,
-        recommendedPrice: Math.max(10, Math.round(item.recommendedPrice * (0.97 + Math.random() * 0.06))),
-        confidence: Math.min(99, Math.max(80, item.confidence + Math.floor(Math.random() * 5) - 2)),
-        status: 'Recalculated',
-      }))
-    );
+  const handleRecalculate = async () => {
+    const data = await apiRequest('/pricing/recalculate', { method: 'POST' });
+    setRows(data);
   };
+
+  if (isLoading) {
+    return <article className="card empty-state">Loading pricing recommendations...</article>;
+  }
+
+  if (error) {
+    return (
+      <article className="card empty-state">
+        <h3>Pricing API unavailable</h3>
+        <p className="muted">{error}</p>
+      </article>
+    );
+  }
 
   return (
     <section className="page-stack">

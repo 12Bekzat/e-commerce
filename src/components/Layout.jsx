@@ -30,6 +30,7 @@ export default function Layout() {
           <NavLink to="/pricing-center">Pricing Center</NavLink>
           <NavLink to="/analytics">Analytics</NavLink>
           {isAuthenticated ? <NavLink to="/profile">Profile</NavLink> : null}
+          {currentUser?.role === 'ROLE_ADMIN' ? <NavLink to="/admin">Admin</NavLink> : null}
         </nav>
 
         <div className="auth-actions">
